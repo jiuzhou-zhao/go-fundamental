@@ -3,7 +3,6 @@ package servicetoolset
 import (
 	"context"
 	"errors"
-
 	"github.com/grpc-ecosystem/go-grpc-middleware"
 	"github.com/jiuzhou-zhao/go-fundamental/grpce"
 	"github.com/jiuzhou-zhao/go-fundamental/grpce/interceptors"
@@ -12,6 +11,7 @@ import (
 )
 
 type ServerToolset struct {
+	ctx          context.Context
 	serverHelper *ServerHelper
 	gRpcServer   *grpce.Server
 	logger       interfaces.Logger
@@ -22,31 +22,43 @@ func NewServerToolset(ctx context.Context, logger interfaces.Logger) *ServerTool
 		logger = &interfaces.EmptyLogger{}
 	}
 	return &ServerToolset{
+		ctx:          ctx,
 		serverHelper: NewServerHelper(ctx, logger),
 		logger:       logger,
 	}
 }
 
-func (st *ServerToolset) Start() {
+func (st *ServerToolset) Start() error {
 	if st.gRpcServer != nil {
-		st.serverHelper.StartServer(st.gRpcServer)
+		return errors.New("started")
 	}
+	st.serverHelper.StartServer(st.gRpcServer)
+	return nil
 }
 
 func (st *ServerToolset) Wait() {
+	_ = st.Start()
 	st.serverHelper.Wait()
 }
 
-func (st *ServerToolset) CreateGRpcServer(cfg *GRpcConfig, opts []grpc.ServerOption, beforeServerStart func(server *grpc.Server)) error {
+func (st *ServerToolset) CreateGRpcServer(cfg *GRpcServerConfig, opts []grpc.ServerOption, beforeServerStart func(server *grpc.Server)) error {
 	if st.gRpcServer != nil {
 		return errors.New("try recreate gRpc server")
 	}
-	var unaryInterceptors []grpc.UnaryServerInterceptor
-	var streamInterceptors []grpc.StreamServerInterceptor
+	unaryInterceptors := []grpc.UnaryServerInterceptor{
+		interceptors.ServerIDInterceptor(cfg.MetaTransKeys),
+	}
+	streamInterceptors := []grpc.StreamServerInterceptor{
+		interceptors.StreamServerIDInterceptor(cfg.MetaTransKeys),
+	}
 	if !cfg.DisableLog {
-		if cfg.Logger != nil {
-			unaryInterceptors = append(unaryInterceptors, interceptors.ServerLogInterceptor(cfg.Logger))
-			streamInterceptors = append(streamInterceptors, interceptors.ServerStreamLogInterceptor(cfg.Logger))
+		logger := cfg.Logger
+		if logger == nil {
+			logger = st.logger
+		}
+		if logger != nil {
+			unaryInterceptors = append(unaryInterceptors, interceptors.ServerLogInterceptor(logger))
+			streamInterceptors = append(streamInterceptors, interceptors.ServerStreamLogInterceptor(logger))
 		}
 	}
 
@@ -57,13 +69,10 @@ func (st *ServerToolset) CreateGRpcServer(cfg *GRpcConfig, opts []grpc.ServerOpt
 		}
 	}
 
-	if len(unaryInterceptors) > 0 {
-		opts = append(opts, grpc.UnaryInterceptor(grpc_middleware.ChainUnaryServer(unaryInterceptors...)))
-	}
-	if len(streamInterceptors) > 0 {
-		opts = append(opts, grpc.StreamInterceptor(grpc_middleware.ChainStreamServer(streamInterceptors...)))
-	}
+	opts = append(opts, grpc.UnaryInterceptor(grpc_middleware.ChainUnaryServer(unaryInterceptors...)))
+	opts = append(opts, grpc.StreamInterceptor(grpc_middleware.ChainStreamServer(streamInterceptors...)))
 
 	st.gRpcServer = grpce.NewServer(cfg.Address, st.logger, beforeServerStart, opts)
+
 	return nil
 }

@@ -43,18 +43,19 @@ func (s *Server) Run(ctx context.Context) (err error) {
 	if err != nil {
 		return
 	}
+	s.logger.Recordf(ctx, interfaces.LogLevelInfo, "gRpcServer listening on %v", s.address)
 
 	go func() {
 		err = server.Serve(l)
 		if err != nil {
-			s.logger.Errorf("gRpcServer serve error: %v", err)
+			s.logger.Recordf(ctx, interfaces.LogLevelError, "gRpcServer serve error: %v", err)
 		}
 		cancel()
 	}()
 
 	<-ctx.Done()
 
-	s.logger.Infof("gRpcServer shutting down")
+	s.logger.Recordf(ctx, interfaces.LogLevelInfo, "gRpcServer shutting down")
 
 	server.Stop()
 

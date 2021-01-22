@@ -17,9 +17,9 @@ func SignalContext(ctx context.Context, logger interfaces.Logger) context.Contex
 	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
 
 	go func() {
-		logger.Infof("listening for shutdown signal")
+		logger.Recordf(ctx, interfaces.LogLevelInfo, "listening for shutdown signal")
 		<-sigs
-		logger.Infof("shutdown signal received")
+		logger.Recordf(ctx, interfaces.LogLevelInfo, "shutdown signal received")
 		signal.Stop(sigs)
 		close(sigs)
 		cancel()
@@ -53,7 +53,7 @@ func (sh *ServerHelper) StartServer(s AbstractServer) {
 	go func() {
 		defer sh.wg.Done()
 		if err := s.Run(sh.ctx); err != nil {
-			sh.logger.Fatalf("runServer error:%v", err)
+			sh.logger.Recordf(context.Background(), interfaces.LogLevelFatal, "runServer error:%v", err)
 		}
 	}()
 }

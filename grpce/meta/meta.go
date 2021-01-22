@@ -29,32 +29,92 @@ func GetRequestIDFromMD(md metadata.MD) string {
 	return ""
 }
 
-func IdFromIncomingContext(ctx context.Context) string {
-	id := ""
-
+/*
+func IdFromIncomingContext(ctx context.Context) (id string, newCreateFlag bool) {
 	if md, ok := metadata.FromIncomingContext(ctx); ok {
 		id = GetRequestIDFromMD(md)
 	}
 
 	if id == "" {
 		id = getRandomID()
+		newCreateFlag = true
 	}
-	return id
+	return
 }
 
 func IdToOutgoingContext(ctx context.Context, id string) context.Context {
 	return metadata.AppendToOutgoingContext(ctx, RequestIdOnMetaData, id)
 }
+*/
 
 func IdFromOutgoingContext(ctx context.Context) string {
-	id := ""
-
 	if md, ok := metadata.FromOutgoingContext(ctx); ok {
-		id = GetRequestIDFromMD(md)
+		return GetRequestIDFromMD(md)
+	}
+	return ""
+}
+
+func TransferContextMeta(ctx context.Context, keys []string) context.Context {
+	var idInIncomingContext, idInOutgoingContext string
+
+	mdIn, ok := metadata.FromIncomingContext(ctx)
+	if !ok {
+		mdIn = metadata.New(nil)
 	}
 
-	if id == "" {
-		id = getRandomID()
+	for _, v := range mdIn.Get(RequestIdOnMetaData) {
+		if v != "" {
+			idInOutgoingContext = v
+			break
+		}
 	}
-	return id
+
+	mdOut := metadata.New(nil)
+	if md, ok := metadata.FromOutgoingContext(ctx); ok {
+		for key, vs := range md {
+			if key == RequestIdOnMetaData {
+				for _, v := range vs {
+					if v != "" {
+						idInOutgoingContext = v
+						break
+					}
+				}
+				continue
+			}
+			mdOut.Set(key, vs...)
+		}
+	}
+
+	if keys == nil {
+		keys = make([]string, 0, mdIn.Len())
+		for key, _ := range mdIn {
+			if key == RequestIdOnMetaData {
+				continue
+			}
+			keys = append(keys, key)
+		}
+	}
+
+	if idInIncomingContext == "" {
+		idInIncomingContext = idInOutgoingContext
+	}
+	if idInIncomingContext == "" {
+		idInIncomingContext = getRandomID()
+	}
+
+	for _, key := range keys {
+		if key == RequestIdOnMetaData {
+			continue
+		}
+		if len(mdIn[key]) == 0 {
+			continue
+		}
+		if len(mdOut[key]) > 0 {
+			continue
+		}
+		mdOut.Set(key, mdIn[key]...)
+	}
+	mdOut.Set(RequestIdOnMetaData, idInIncomingContext)
+
+	return metadata.NewOutgoingContext(ctx, mdOut)
 }
