@@ -15,6 +15,8 @@ type ServerToolset struct {
 	serverHelper *ServerHelper
 	gRpcServer   *grpce.Server
 	logger       interfaces.Logger
+
+	started bool
 }
 
 func NewServerToolset(ctx context.Context, logger interfaces.Logger) *ServerToolset {
@@ -29,10 +31,14 @@ func NewServerToolset(ctx context.Context, logger interfaces.Logger) *ServerTool
 }
 
 func (st *ServerToolset) Start() error {
-	if st.gRpcServer != nil {
+	if st.started {
 		return errors.New("started")
 	}
-	st.serverHelper.StartServer(st.gRpcServer)
+	st.started = true
+
+	if st.gRpcServer != nil {
+		st.serverHelper.StartServer(st.gRpcServer)
+	}
 	return nil
 }
 
