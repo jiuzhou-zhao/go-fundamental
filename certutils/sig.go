@@ -38,6 +38,6 @@ func GetPublicKeyHash(publicKey interface{}) (string, error) {
 	}
 
 	h := hmac.New(sha256.New, []byte("1"))
-	h.Write(pubKey)
+	_, _ = h.Write(pubKey)
 	return base64.StdEncoding.EncodeToString(h.Sum(nil)), nil
 }

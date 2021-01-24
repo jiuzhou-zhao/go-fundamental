@@ -87,7 +87,7 @@ func TransferContextMeta(ctx context.Context, keys []string) context.Context {
 
 	if keys == nil {
 		keys = make([]string, 0, mdIn.Len())
-		for key, _ := range mdIn {
+		for key := range mdIn {
 			if key == RequestIdOnMetaData {
 				continue
 			}

@@ -51,9 +51,17 @@ type ConsoleLogger struct {
 }
 
 func (l *ConsoleLogger) Record(ctx context.Context, level LoggerLevel, v ...interface{}) {
-	fmt.Printf("[%v] %v\n", level.String(), fmt.Sprint(v...))
+	i := fmt.Sprint(v...)
+	fmt.Printf("[%v] %v\n", level.String(), i)
+	if level == LogLevelFatal {
+		panic(i)
+	}
 }
 
 func (l *ConsoleLogger) Recordf(ctx context.Context, level LoggerLevel, format string, v ...interface{}) {
-	fmt.Printf("[%v] %v\n", level.String(), fmt.Sprintf(format, v...))
+	i := fmt.Sprintf(format, v...)
+	fmt.Printf("[%v] %v\n", level.String(), i)
+	if level == LogLevelFatal {
+		panic(i)
+	}
 }
