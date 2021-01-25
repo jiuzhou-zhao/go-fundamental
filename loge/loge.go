@@ -2,6 +2,7 @@ package loge
 
 import (
 	"context"
+	"log"
 	"sync"
 
 	"github.com/jiuzhou-zhao/go-fundamental/interfaces"
@@ -80,4 +81,72 @@ func GetGlobalLogger() *Logger {
 	globalLock.RLock()
 	defer globalLock.RUnlock()
 	return globalLogger
+}
+
+func _logOrPanic(f func(logger *Logger)) {
+	logger := GetGlobalLogger()
+	if logger == nil {
+		log.Fatal("no global logger")
+	}
+	f(logger)
+}
+
+func Debug(ctx context.Context, v ...interface{}) {
+	_logOrPanic(func(logger *Logger) {
+		logger.Debug(ctx, v...)
+	})
+}
+
+func Debugf(ctx context.Context, format string, v ...interface{}) {
+	_logOrPanic(func(logger *Logger) {
+		logger.Debugf(ctx, format, v...)
+	})
+}
+
+func Info(ctx context.Context, v ...interface{}) {
+	_logOrPanic(func(logger *Logger) {
+		logger.Info(ctx, v...)
+	})
+}
+
+func Infof(ctx context.Context, format string, v ...interface{}) {
+	_logOrPanic(func(logger *Logger) {
+		logger.Infof(ctx, format, v...)
+	})
+}
+
+func Warn(ctx context.Context, v ...interface{}) {
+	_logOrPanic(func(logger *Logger) {
+		logger.Warn(ctx, v...)
+	})
+}
+
+func Warnf(ctx context.Context, format string, v ...interface{}) {
+	_logOrPanic(func(logger *Logger) {
+		logger.Warnf(ctx, format, v...)
+	})
+}
+
+func Error(ctx context.Context, v ...interface{}) {
+	_logOrPanic(func(logger *Logger) {
+		logger.Error(ctx, v...)
+	})
+}
+
+func Errorf(ctx context.Context, format string, v ...interface{}) {
+	_logOrPanic(func(logger *Logger) {
+		logger.Errorf(ctx, format, v...)
+	})
+}
+
+func Fatal(ctx context.Context, v ...interface{}) {
+	_logOrPanic(func(logger *Logger) {
+		logger.Fatal(ctx, v...)
+	})
+}
+
+func Fatalf(ctx context.Context, format string, v ...interface{}) {
+	_logOrPanic(func(logger *Logger) {
+		logger.Fatalf(ctx, format, v...)
+	})
 }
