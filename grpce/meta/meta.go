@@ -2,8 +2,10 @@ package meta
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"math/rand"
+	"strconv"
 
 	"google.golang.org/grpc/metadata"
 )
@@ -117,4 +119,31 @@ func TransferContextMeta(ctx context.Context, keys []string) context.Context {
 	mdOut.Set(RequestIdOnMetaData, idInIncomingContext)
 
 	return metadata.NewOutgoingContext(ctx, mdOut)
+}
+
+func GetFromMetaString(ctx context.Context, key string) (string, error) {
+	md, ok := metadata.FromIncomingContext(ctx)
+	if ok {
+		values := md.Get(key)
+		if len(values) > 0 {
+			return values[0], nil
+		}
+	}
+	return "", errors.New("not exists")
+}
+
+func GetStringFromMeta(ctx context.Context, key string) (string, error) {
+	return GetFromMetaString(ctx, key)
+}
+
+func GetIntFromMeta(ctx context.Context, key string) (int64, error) {
+	v, err := GetStringFromMeta(ctx, key)
+	if err != nil {
+		return 0, err
+	}
+	vv, err := strconv.ParseInt(v, 10, 64)
+	if err != nil {
+		return 0, err
+	}
+	return vv, nil
 }
