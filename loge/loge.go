@@ -2,8 +2,14 @@ package loge
 
 import (
 	"context"
+	"sync"
 
 	"github.com/jiuzhou-zhao/go-fundamental/interfaces"
+)
+
+var (
+	globalLock   sync.RWMutex
+	globalLogger *Logger
 )
 
 type Logger struct {
@@ -59,4 +65,19 @@ func (logger *Logger) Fatal(ctx context.Context, v ...interface{}) {
 
 func (logger *Logger) Fatalf(ctx context.Context, format string, v ...interface{}) {
 	logger.loggerImpl.Recordf(ctx, interfaces.LogLevelFatal, format, v...)
+}
+
+func SetGlobalLogger(logger *Logger) *Logger {
+	globalLock.Lock()
+	defer globalLock.Unlock()
+
+	oldLogger := globalLogger
+	globalLogger = logger
+	return oldLogger
+}
+
+func GetGlobalLogger() *Logger {
+	globalLock.RLock()
+	defer globalLock.RUnlock()
+	return globalLogger
 }
