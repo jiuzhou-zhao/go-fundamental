@@ -9,6 +9,7 @@ require (
 	github.com/grpc-ecosystem/go-grpc-middleware v1.2.2
 	github.com/kr/pretty v0.1.0 // indirect
 	github.com/stretchr/testify v1.7.0
+	golang.org/x/net v0.0.0-20201202161906-c7110b5ffcbb
 	google.golang.org/grpc v1.35.0
 	google.golang.org/grpc/examples v0.0.0-20210122012134-2c42474aca0c
 	gopkg.in/yaml.v2 v2.4.0
