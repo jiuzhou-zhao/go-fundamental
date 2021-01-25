@@ -6,6 +6,7 @@ import (
 	"sync"
 
 	"github.com/jiuzhou-zhao/go-fundamental/interfaces"
+	"github.com/jiuzhou-zhao/go-fundamental/loge"
 	"github.com/jiuzhou-zhao/go-fundamental/serviceutils/service_wrapper/ssinterface"
 )
 
@@ -21,7 +22,7 @@ type ServiceWrapper struct {
 func NewServiceWrapper(ctx context.Context, logger interfaces.Logger) *ServiceWrapper {
 	ctx, cancel := context.WithCancel(ctx)
 	if logger == nil {
-		logger = &interfaces.ConsoleLogger{}
+		logger = &loge.ConsoleLogger{}
 	}
 	return &ServiceWrapper{
 		ctx:       ctx,

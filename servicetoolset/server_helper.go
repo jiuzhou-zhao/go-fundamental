@@ -8,6 +8,7 @@ import (
 	"syscall"
 
 	"github.com/jiuzhou-zhao/go-fundamental/interfaces"
+	"github.com/jiuzhou-zhao/go-fundamental/loge"
 )
 
 func SignalContext(ctx context.Context, logger interfaces.Logger) context.Context {
@@ -35,16 +36,13 @@ type AbstractServer interface {
 type ServerHelper struct {
 	ctx    context.Context
 	wg     sync.WaitGroup
-	logger interfaces.Logger
+	logger *loge.Logger
 }
 
 func NewServerHelper(ctx context.Context, logger interfaces.Logger) *ServerHelper {
-	if logger == nil {
-		logger = &interfaces.EmptyLogger{}
-	}
 	return &ServerHelper{
 		ctx:    SignalContext(ctx, logger),
-		logger: logger,
+		logger: loge.NewLogger(logger),
 	}
 }
 
@@ -53,7 +51,7 @@ func (sh *ServerHelper) StartServer(s AbstractServer) {
 	go func() {
 		defer sh.wg.Done()
 		if err := s.Run(sh.ctx); err != nil {
-			sh.logger.Recordf(context.Background(), interfaces.LogLevelFatal, "runServer error:%v", err)
+			sh.logger.Fatalf(context.Background(), "runServer error:%v", err)
 		}
 	}()
 }

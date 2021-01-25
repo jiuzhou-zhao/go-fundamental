@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/jiuzhou-zhao/go-fundamental/clienttoolset"
-	"github.com/jiuzhou-zhao/go-fundamental/interfaces"
+	"github.com/jiuzhou-zhao/go-fundamental/loge"
 	"github.com/jiuzhou-zhao/go-fundamental/servicetoolset"
 	"github.com/stretchr/testify/assert"
 	"google.golang.org/grpc"
@@ -42,7 +42,7 @@ func TestGRpcServer1(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Hour)
 	defer cancel()
 
-	logger := &interfaces.ConsoleLogger{}
+	logger := &loge.ConsoleLogger{}
 
 	go func() {
 		conn, err := clienttoolset.DialGRpcServer(&clienttoolset.GRpcClientConfig{
@@ -72,7 +72,7 @@ func TestGRpcServer1(t *testing.T) {
 	}()
 
 	go func() {
-		serviceToolset := servicetoolset.NewServerToolset(ctx, &interfaces.ConsoleLogger{})
+		serviceToolset := servicetoolset.NewServerToolset(ctx, &loge.ConsoleLogger{})
 		err := serviceToolset.CreateGRpcServer(&servicetoolset.GRpcServerConfig{
 			Address:       ":9002",
 			DisableLog:    false,

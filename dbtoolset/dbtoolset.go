@@ -8,12 +8,13 @@ import (
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/go-xorm/xorm"
 	"github.com/jiuzhou-zhao/go-fundamental/interfaces"
+	"github.com/jiuzhou-zhao/go-fundamental/loge"
 )
 
 type DBToolset struct {
 	ctx          context.Context
 	cfg          *DBConfig
-	logger       interfaces.Logger
+	logger       *loge.Logger
 	defaultRedis *redis.Client
 	redisMap     map[string]*redis.Client
 	defaultMySQL *xorm.Engine
@@ -21,9 +22,6 @@ type DBToolset struct {
 }
 
 func NewDBToolset(ctx context.Context, cfg *DBConfig, logger interfaces.Logger) (*DBToolset, error) {
-	if logger == nil {
-		logger = &interfaces.ConsoleLogger{}
-	}
 	if cfg == nil {
 		logger.Record(ctx, interfaces.LogLevelFatal, "no config")
 		return nil, errors.New("no config")
@@ -31,18 +29,18 @@ func NewDBToolset(ctx context.Context, cfg *DBConfig, logger interfaces.Logger) 
 	toolset := &DBToolset{
 		ctx:      ctx,
 		cfg:      cfg,
-		logger:   logger,
+		logger:   loge.NewLogger(logger),
 		redisMap: make(map[string]*redis.Client),
 		mySQLMap: make(map[string]*xorm.Engine),
 	}
 	err := toolset.allRedisInit()
 	if err != nil {
-		logger.Recordf(ctx, interfaces.LogLevelFatal, "init redis failed: %v", err)
+		toolset.logger.Fatalf(ctx, "init redis failed: %v", err)
 		return nil, err
 	}
 	err = toolset.allMySQLInit()
 	if err != nil {
-		logger.Recordf(ctx, interfaces.LogLevelFatal, "init mysql failed: %v", err)
+		toolset.logger.Fatalf(ctx, "init mysql failed: %v", err)
 		return nil, err
 	}
 	return toolset, nil
@@ -51,7 +49,7 @@ func NewDBToolset(ctx context.Context, cfg *DBConfig, logger interfaces.Logger) 
 func (toolset *DBToolset) redisInit(cfg *RedisConfig) (redisCli *redis.Client, err error) {
 	options, err := redis.ParseURL(cfg.DSN)
 	if err != nil {
-		toolset.logger.Recordf(toolset.ctx, interfaces.LogLevelError, "init redis failed: %v", err)
+		toolset.logger.Errorf(toolset.ctx, "init redis failed: %v", err)
 		return
 	}
 	redisCli = redis.NewClient(options)
@@ -105,7 +103,7 @@ func (toolset *DBToolset) allMySQLInit() error {
 
 func (toolset *DBToolset) GetRedis() *redis.Client {
 	if toolset.defaultRedis == nil {
-		toolset.logger.Record(toolset.ctx, interfaces.LogLevelFatal, "no default redis")
+		toolset.logger.Fatalf(toolset.ctx, "no default redis")
 	}
 	return toolset.defaultRedis
 }
@@ -116,7 +114,7 @@ func (toolset *DBToolset) GetRedisByName(name string) *redis.Client {
 
 func (toolset *DBToolset) GetMySQL() *xorm.Engine {
 	if toolset.defaultMySQL == nil {
-		toolset.logger.Record(toolset.ctx, interfaces.LogLevelFatal, "no default mysql")
+		toolset.logger.Fatal(toolset.ctx, "no default mysql")
 	}
 	return toolset.defaultMySQL
 }

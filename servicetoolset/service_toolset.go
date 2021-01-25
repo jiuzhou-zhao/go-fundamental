@@ -3,10 +3,12 @@ package servicetoolset
 import (
 	"context"
 	"errors"
+
 	"github.com/grpc-ecosystem/go-grpc-middleware"
 	"github.com/jiuzhou-zhao/go-fundamental/grpce"
 	"github.com/jiuzhou-zhao/go-fundamental/grpce/interceptors"
 	"github.com/jiuzhou-zhao/go-fundamental/interfaces"
+	"github.com/jiuzhou-zhao/go-fundamental/loge"
 	"google.golang.org/grpc"
 )
 
@@ -21,7 +23,7 @@ type ServerToolset struct {
 
 func NewServerToolset(ctx context.Context, logger interfaces.Logger) *ServerToolset {
 	if logger == nil {
-		logger = &interfaces.EmptyLogger{}
+		logger = &loge.EmptyLogger{}
 	}
 	return &ServerToolset{
 		ctx:          ctx,

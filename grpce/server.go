@@ -5,6 +5,7 @@ import (
 	"net"
 
 	"github.com/jiuzhou-zhao/go-fundamental/interfaces"
+	"github.com/jiuzhou-zhao/go-fundamental/loge"
 	"google.golang.org/grpc"
 )
 
@@ -12,18 +13,15 @@ type BeforeServerStart func(server *grpc.Server)
 
 type Server struct {
 	address           string
-	logger            interfaces.Logger
+	logger            *loge.Logger
 	beforeServerStart BeforeServerStart
 	opts              []grpc.ServerOption
 }
 
 func NewServer(address string, logger interfaces.Logger, beforeServerStart BeforeServerStart, opts []grpc.ServerOption) *Server {
-	if logger == nil {
-		logger = &interfaces.EmptyLogger{}
-	}
 	return &Server{
 		address:           address,
-		logger:            logger,
+		logger:            loge.NewLogger(logger),
 		beforeServerStart: beforeServerStart,
 		opts:              opts,
 	}
@@ -43,19 +41,19 @@ func (s *Server) Run(ctx context.Context) (err error) {
 	if err != nil {
 		return
 	}
-	s.logger.Recordf(ctx, interfaces.LogLevelInfo, "gRpcServer listening on %v", s.address)
+	s.logger.Infof(ctx, "gRpcServer listening on %v", s.address)
 
 	go func() {
 		err = server.Serve(l)
 		if err != nil {
-			s.logger.Recordf(ctx, interfaces.LogLevelError, "gRpcServer serve error: %v", err)
+			s.logger.Errorf(ctx, "gRpcServer serve error: %v", err)
 		}
 		cancel()
 	}()
 
 	<-ctx.Done()
 
-	s.logger.Recordf(ctx, interfaces.LogLevelInfo, "gRpcServer shutting down")
+	s.logger.Infof(ctx, "gRpcServer shutting down")
 
 	server.Stop()
 

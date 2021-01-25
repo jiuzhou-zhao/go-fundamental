@@ -2,7 +2,6 @@ package interfaces
 
 import (
 	"context"
-	"fmt"
 )
 
 type LoggerLevel int
@@ -34,34 +33,4 @@ func (ll LoggerLevel) String() string {
 type Logger interface {
 	Record(ctx context.Context, level LoggerLevel, v ...interface{})
 	Recordf(ctx context.Context, level LoggerLevel, format string, v ...interface{})
-}
-
-type EmptyLogger struct {
-}
-
-func (logger *EmptyLogger) Record(ctx context.Context, level LoggerLevel, v ...interface{}) {
-
-}
-
-func (logger *EmptyLogger) Recordf(ctx context.Context, level LoggerLevel, format string, v ...interface{}) {
-
-}
-
-type ConsoleLogger struct {
-}
-
-func (l *ConsoleLogger) Record(ctx context.Context, level LoggerLevel, v ...interface{}) {
-	i := fmt.Sprint(v...)
-	fmt.Printf("[%v] %v\n", level.String(), i)
-	if level == LogLevelFatal {
-		panic(i)
-	}
-}
-
-func (l *ConsoleLogger) Recordf(ctx context.Context, level LoggerLevel, format string, v ...interface{}) {
-	i := fmt.Sprintf(format, v...)
-	fmt.Printf("[%v] %v\n", level.String(), i)
-	if level == LogLevelFatal {
-		panic(i)
-	}
 }
