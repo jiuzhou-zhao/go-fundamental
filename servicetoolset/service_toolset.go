@@ -7,6 +7,7 @@ import (
 	"github.com/grpc-ecosystem/go-grpc-middleware"
 	"github.com/jiuzhou-zhao/go-fundamental/grpce"
 	"github.com/jiuzhou-zhao/go-fundamental/grpce/interceptors"
+	"github.com/jiuzhou-zhao/go-fundamental/httpe"
 	"github.com/jiuzhou-zhao/go-fundamental/interfaces"
 	"github.com/jiuzhou-zhao/go-fundamental/loge"
 	"google.golang.org/grpc"
@@ -16,6 +17,7 @@ type ServerToolset struct {
 	ctx          context.Context
 	serverHelper *ServerHelper
 	gRpcServer   *grpce.Server
+	httpServer   *httpe.Server
 	logger       interfaces.Logger
 
 	started bool
@@ -40,6 +42,9 @@ func (st *ServerToolset) Start() error {
 
 	if st.gRpcServer != nil {
 		st.serverHelper.StartServer(st.gRpcServer)
+	}
+	if st.httpServer != nil {
+		st.serverHelper.StartServer(st.httpServer)
 	}
 	return nil
 }
@@ -81,6 +86,15 @@ func (st *ServerToolset) CreateGRpcServer(cfg *GRpcServerConfig, opts []grpc.Ser
 	opts = append(opts, grpc.StreamInterceptor(grpc_middleware.ChainStreamServer(streamInterceptors...)))
 
 	st.gRpcServer = grpce.NewServer(cfg.Address, st.logger, beforeServerStart, opts)
+
+	return nil
+}
+
+func (st *ServerToolset) CreateHttpServer(cfg *HttpServerConfig) error {
+	if st.httpServer != nil {
+		return errors.New("try recreate http server")
+	}
+	st.httpServer = httpe.NewServer(cfg.Address, st.logger, cfg.handler)
 
 	return nil
 }

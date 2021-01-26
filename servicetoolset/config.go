@@ -1,6 +1,8 @@
 package servicetoolset
 
 import (
+	"net/http"
+
 	"github.com/jiuzhou-zhao/go-fundamental/certutils"
 	"github.com/jiuzhou-zhao/go-fundamental/interfaces"
 )
@@ -12,4 +14,9 @@ type GRpcServerConfig struct {
 	EnableCertVerify bool
 	CertInfo         *certutils.SecureOption
 	MetaTransKeys    []string `json:"-" yaml:"-"`
+}
+
+type HttpServerConfig struct {
+	Address string
+	handler http.Handler
 }
