@@ -13,10 +13,10 @@ type GRpcServerConfig struct {
 	Logger           interfaces.Logger `json:"-" yaml:"-"`
 	EnableCertVerify bool
 	CertInfo         *certutils.SecureOption
-	MetaTransKeys    []string `json:"-" yaml:"-"`
+	MetaTransKeys    []string
 }
 
 type HttpServerConfig struct {
 	Address string
-	handler http.Handler
+	handler http.Handler `json:"-" yaml:"-"`
 }
