@@ -18,5 +18,5 @@ type GRpcServerConfig struct {
 
 type HttpServerConfig struct {
 	Address string
-	handler http.Handler `json:"-" yaml:"-"`
+	Handler http.Handler `json:"-" yaml:"-"`
 }

@@ -12,14 +12,14 @@ import (
 type Server struct {
 	address string
 	logger  *loge.Logger
-	Handler http.Handler
+	handler http.Handler
 }
 
 func NewServer(address string, logger interfaces.Logger, handler http.Handler) *Server {
 	return &Server{
 		address: address,
 		logger:  loge.NewLogger(logger),
-		Handler: handler,
+		handler: handler,
 	}
 }
 
@@ -28,7 +28,7 @@ func (s *Server) Run(ctx context.Context) (err error) {
 	defer cancel()
 
 	server := &http.Server{
-		Handler: s.Handler,
+		Handler: s.handler,
 	}
 
 	l, err := net.Listen("tcp", s.address)

@@ -98,10 +98,10 @@ func (st *ServerToolset) CreateHttpServer(cfg *HttpServerConfig) error {
 	if st.httpServer != nil {
 		return errors.New("try recreate http server")
 	}
-	if cfg == nil || cfg.Address == "" || !strings.Contains(cfg.Address, ":") || cfg.handler == nil {
+	if cfg == nil || cfg.Address == "" || !strings.Contains(cfg.Address, ":") || cfg.Handler == nil {
 		return errors.New("invalid input args")
 	}
-	st.httpServer = httpe.NewServer(cfg.Address, st.logger, cfg.handler)
+	st.httpServer = httpe.NewServer(cfg.Address, st.logger, cfg.Handler)
 
 	return nil
 }
