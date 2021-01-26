@@ -3,6 +3,7 @@ package servicetoolset
 import (
 	"context"
 	"errors"
+	"strings"
 
 	"github.com/grpc-ecosystem/go-grpc-middleware"
 	"github.com/jiuzhou-zhao/go-fundamental/grpce"
@@ -58,6 +59,9 @@ func (st *ServerToolset) CreateGRpcServer(cfg *GRpcServerConfig, opts []grpc.Ser
 	if st.gRpcServer != nil {
 		return errors.New("try recreate gRpc server")
 	}
+	if cfg == nil || cfg.Address == "" || !strings.Contains(cfg.Address, ":") {
+		return errors.New("invalid input args")
+	}
 	unaryInterceptors := []grpc.UnaryServerInterceptor{
 		interceptors.ServerIDInterceptor(cfg.MetaTransKeys),
 	}
@@ -93,6 +97,9 @@ func (st *ServerToolset) CreateGRpcServer(cfg *GRpcServerConfig, opts []grpc.Ser
 func (st *ServerToolset) CreateHttpServer(cfg *HttpServerConfig) error {
 	if st.httpServer != nil {
 		return errors.New("try recreate http server")
+	}
+	if cfg == nil || cfg.Address == "" || !strings.Contains(cfg.Address, ":") || cfg.handler == nil {
+		return errors.New("invalid input args")
 	}
 	st.httpServer = httpe.NewServer(cfg.Address, st.logger, cfg.handler)
 
