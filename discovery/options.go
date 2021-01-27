@@ -1,31 +1,31 @@
 package discovery
 
 type Options struct {
-	serviceType string
-	serviceName string
-	rawKey      string
+	ServiceType string
+	ServiceName string
+	RawKey      string
 }
 
 func (options Options) String() string {
-	if options.rawKey != "" {
-		return options.rawKey
+	if options.RawKey != "" {
+		return options.RawKey
 	}
-	if options.serviceType == "*" && options.serviceName == "*" {
+	if options.ServiceType == "*" && options.ServiceName == "*" {
 		return "*"
 	}
-	return options.serviceType + ":" + options.serviceName + ":*"
+	return options.ServiceType + ":" + options.ServiceName + ":*"
 }
 
 type funcDiscoveryOption struct {
 	f func(*Options)
 }
 
-func (fdo *funcDiscoveryOption) apply(do *Options) {
+func (fdo *funcDiscoveryOption) Apply(do *Options) {
 	fdo.f(do)
 }
 
 type Option interface {
-	apply(*Options)
+	Apply(*Options)
 }
 
 func TypeOption(t string) Option {
@@ -34,7 +34,7 @@ func TypeOption(t string) Option {
 			if t == "" {
 				t = "*"
 			}
-			options.serviceType = t
+			options.ServiceType = t
 		},
 	}
 }
@@ -45,7 +45,7 @@ func NameOption(t string) Option {
 			if t == "" {
 				t = "*"
 			}
-			options.serviceName = t
+			options.ServiceName = t
 		},
 	}
 }
@@ -53,7 +53,7 @@ func NameOption(t string) Option {
 func RawKeyOption(t string) Option {
 	return &funcDiscoveryOption{
 		f: func(options *Options) {
-			options.rawKey = t
+			options.RawKey = t
 		},
 	}
 }
