@@ -17,7 +17,7 @@ type ServiceInfo struct {
 	Meta        map[string]string
 }
 
-type Observer func(services map[string]*ServiceInfo)
+type Observer func(services []*ServiceInfo)
 
 func BuildServerName(t string, name string, index string) string {
 	t = strings.ToLower(t)
