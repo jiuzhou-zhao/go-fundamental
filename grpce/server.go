@@ -31,7 +31,7 @@ type Server struct {
 }
 
 func NewServer(serverName string, address string, logger interfaces.Logger, beforeServerStart BeforeServerStart, opts []grpc.ServerOption) *Server {
-	if serverName != "" {
+	if serverName == "" {
 		serverName = uuid.NewV4().String()
 	}
 	return &Server{
