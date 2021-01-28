@@ -3,12 +3,14 @@ package grpce
 import (
 	"context"
 	"errors"
+	"fmt"
 	"net"
 	"strconv"
 	"strings"
 
 	"github.com/jiuzhou-zhao/go-fundamental/discovery"
 	"github.com/jiuzhou-zhao/go-fundamental/interfaces"
+	"github.com/jiuzhou-zhao/go-fundamental/iputils"
 	"github.com/jiuzhou-zhao/go-fundamental/loge"
 	"github.com/satori/go.uuid"
 	"google.golang.org/grpc"
@@ -54,7 +56,7 @@ func (s *Server) getDiscoveryHostAndPort(ctx context.Context) (host string, port
 			return
 		}
 		vs := strings.Split(address, ":")
-		if len(vs) >= 2 {
+		if len(vs) > 2 {
 			err = errors.New("invalid address")
 			return
 		}
@@ -89,6 +91,16 @@ func (s *Server) getDiscoveryHostAndPort(ctx context.Context) (host string, port
 	}
 	if port <= 0 {
 		port = port2
+	}
+	if host == "" {
+		ips, err := iputils.LocalIPv4s()
+		if err == nil && len(ips) > 0 {
+			host = ips[0]
+		}
+	}
+	if host == "" || port < 0 {
+		err = fmt.Errorf("invalid host port: %v,%v", host, port)
+		return
 	}
 	return
 }
