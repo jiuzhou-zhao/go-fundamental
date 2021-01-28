@@ -123,7 +123,9 @@ func DCopy(srcdir, destdir string, info os.FileInfo) error {
 		return err
 	}
 	// Recover dir mode with original one.
-	defer os.Chmod(destdir, originalMode)
+	defer func() {
+		_ = os.Chmod(destdir, originalMode)
+	}()
 
 	contents, err := ioutil.ReadDir(srcdir)
 	if err != nil {
