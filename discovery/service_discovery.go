@@ -5,6 +5,10 @@ const (
 	TypeHttp = "http"
 )
 
+const (
+	MetaGRPCClass = "grpc_class"
+)
+
 type ServiceInfo struct {
 	Host        string
 	Port        int

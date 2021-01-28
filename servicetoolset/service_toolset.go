@@ -89,8 +89,10 @@ func (st *ServerToolset) CreateGRpcServer(cfg *GRpcServerConfig, opts []grpc.Ser
 	opts = append(opts, grpc.UnaryInterceptor(grpc_middleware.ChainUnaryServer(unaryInterceptors...)))
 	opts = append(opts, grpc.StreamInterceptor(grpc_middleware.ChainStreamServer(streamInterceptors...)))
 
-	st.gRpcServer = grpce.NewServer(cfg.Address, st.logger, beforeServerStart, opts)
-
+	st.gRpcServer = grpce.NewServer(cfg.Name, cfg.Address, st.logger, beforeServerStart, opts)
+	if cfg.DiscoveryExConfig.Setter != nil {
+		st.gRpcServer.EnableDiscovery(cfg.DiscoveryExConfig.Setter, cfg.DiscoveryExConfig.ExternalAddress, cfg.DiscoveryExConfig.Meta)
+	}
 	return nil
 }
 

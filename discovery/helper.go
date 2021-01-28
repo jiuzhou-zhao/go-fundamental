@@ -7,7 +7,11 @@ import (
 
 func BuildServerName(t string, name string, index string) string {
 	t = strings.ToLower(t)
-	return fmt.Sprintf("%v:%v:%v", t, name, index)
+	serverName := fmt.Sprintf("%v:%v", t, name)
+	if index != "" {
+		serverName = serverName + ":" + index
+	}
+	return serverName
 }
 
 func ParseServerName(n string) (t string, name string, index string, err error) {
