@@ -15,7 +15,7 @@ import (
 
 var (
 	_lock     sync.Mutex
-	_builders map[string]*discoveryBuilder // schema => builder
+	_builders = make(map[string]*discoveryBuilder) // schema => builder
 )
 
 //
