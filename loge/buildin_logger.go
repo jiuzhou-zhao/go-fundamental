@@ -10,18 +10,18 @@ import (
 type EmptyLogger struct {
 }
 
-func (logger *EmptyLogger) Record(ctx context.Context, level interfaces.LoggerLevel, v ...interface{}) {
+func (logger *EmptyLogger) Record(ctx context.Context, depth int, level interfaces.LoggerLevel, v ...interface{}) {
 
 }
 
-func (logger *EmptyLogger) Recordf(ctx context.Context, level interfaces.LoggerLevel, format string, v ...interface{}) {
+func (logger *EmptyLogger) Recordf(ctx context.Context, depth int, level interfaces.LoggerLevel, format string, v ...interface{}) {
 
 }
 
 type ConsoleLogger struct {
 }
 
-func (l *ConsoleLogger) Record(ctx context.Context, level interfaces.LoggerLevel, v ...interface{}) {
+func (l *ConsoleLogger) Record(ctx context.Context, depth int, level interfaces.LoggerLevel, v ...interface{}) {
 	i := fmt.Sprint(v...)
 	fmt.Printf("[%v] %v\n", level.String(), i)
 	if level == interfaces.LogLevelFatal {
@@ -29,7 +29,7 @@ func (l *ConsoleLogger) Record(ctx context.Context, level interfaces.LoggerLevel
 	}
 }
 
-func (l *ConsoleLogger) Recordf(ctx context.Context, level interfaces.LoggerLevel, format string, v ...interface{}) {
+func (l *ConsoleLogger) Recordf(ctx context.Context, depth int, level interfaces.LoggerLevel, format string, v ...interface{}) {
 	i := fmt.Sprintf(format, v...)
 	fmt.Printf("[%v] %v\n", level.String(), i)
 	if level == interfaces.LogLevelFatal {

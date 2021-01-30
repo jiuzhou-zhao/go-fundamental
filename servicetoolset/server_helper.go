@@ -18,9 +18,10 @@ func SignalContext(ctx context.Context, logger interfaces.Logger) context.Contex
 	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
 
 	go func() {
-		logger.Recordf(ctx, interfaces.LogLevelInfo, "listening for shutdown signal")
+		eLog := loge.NewLogger(logger)
+		eLog.Info(ctx, "listening for shutdown signal")
 		<-sigs
-		logger.Recordf(ctx, interfaces.LogLevelInfo, "shutdown signal received")
+		eLog.Info(ctx, "shutdown signal received")
 		signal.Stop(sigs)
 		close(sigs)
 		cancel()

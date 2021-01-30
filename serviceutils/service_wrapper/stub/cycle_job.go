@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/jiuzhou-zhao/go-fundamental/interfaces"
+	"github.com/jiuzhou-zhao/go-fundamental/loge"
 	"github.com/jiuzhou-zhao/go-fundamental/serviceutils/service_wrapper/ssinterface"
 )
 
@@ -23,26 +24,28 @@ func NewCycleJobServiceStub(serviceImpl ssinterface.CycleJobService) ssinterface
 
 func (ss *cycleJobService) Run(ctx context.Context, logger interfaces.Logger) {
 	loop := true
-	logger.Record(ctx, interfaces.LogLevelDebug, "enter cycle job loop")
+
+	eLog := loge.NewLogger(logger)
+	eLog.Debug(ctx, "enter cycle job loop")
 
 	duration, err := ss.serviceImpl.DoJob(ctx, logger)
 	if err != nil {
-		logger.Recordf(ctx, interfaces.LogLevelError, "do job failed: %v", err)
+		eLog.Errorf(ctx, "do job failed: %v", err)
 		return
 	}
 	for loop {
 		select {
 		case <-ctx.Done():
 			loop = false
-			logger.Record(ctx, interfaces.LogLevelDebug, "check ctx done, try exit loop")
+			eLog.Debug(ctx, "check ctx done, try exit loop")
 		case <-time.After(duration):
 			duration, err = ss.serviceImpl.DoJob(ctx, logger)
 			if err != nil {
-				logger.Recordf(ctx, interfaces.LogLevelError, "do job failed: %v", err)
+				eLog.Errorf(ctx, "do job failed: %v", err)
 				loop = false
 				break
 			}
 		}
 	}
-	logger.Record(ctx, interfaces.LogLevelDebug, "leave cycle job loop")
+	eLog.Debug(ctx, "leave cycle job loop")
 }

@@ -14,6 +14,7 @@ var (
 )
 
 type Logger struct {
+	depth      int
 	loggerImpl interfaces.Logger
 }
 
@@ -21,51 +22,61 @@ func NewLogger(logger interfaces.Logger) *Logger {
 	if logger == nil {
 		logger = &ConsoleLogger{}
 	}
-	return &Logger{loggerImpl: logger}
+	return &Logger{
+		depth:      1,
+		loggerImpl: logger,
+	}
 }
 
 func (logger *Logger) GetLogger() interfaces.Logger {
 	return logger.loggerImpl
 }
 
+func (logger *Logger) WithDepth(depth int) *Logger {
+	return &Logger{
+		depth:      1 + depth,
+		loggerImpl: logger.loggerImpl,
+	}
+}
+
 func (logger *Logger) Debug(ctx context.Context, v ...interface{}) {
-	logger.loggerImpl.Record(ctx, interfaces.LogLevelDebug, v...)
+	logger.loggerImpl.Record(ctx, logger.depth, interfaces.LogLevelDebug, v...)
 }
 
 func (logger *Logger) Debugf(ctx context.Context, format string, v ...interface{}) {
-	logger.loggerImpl.Recordf(ctx, interfaces.LogLevelDebug, format, v...)
+	logger.loggerImpl.Recordf(ctx, logger.depth, interfaces.LogLevelDebug, format, v...)
 }
 
 func (logger *Logger) Info(ctx context.Context, v ...interface{}) {
-	logger.loggerImpl.Record(ctx, interfaces.LogLevelInfo, v...)
+	logger.loggerImpl.Record(ctx, logger.depth, interfaces.LogLevelInfo, v...)
 }
 
 func (logger *Logger) Infof(ctx context.Context, format string, v ...interface{}) {
-	logger.loggerImpl.Recordf(ctx, interfaces.LogLevelInfo, format, v...)
+	logger.loggerImpl.Recordf(ctx, logger.depth, interfaces.LogLevelInfo, format, v...)
 }
 
 func (logger *Logger) Warn(ctx context.Context, v ...interface{}) {
-	logger.loggerImpl.Record(ctx, interfaces.LogLevelWarn, v...)
+	logger.loggerImpl.Record(ctx, logger.depth, interfaces.LogLevelWarn, v...)
 }
 
 func (logger *Logger) Warnf(ctx context.Context, format string, v ...interface{}) {
-	logger.loggerImpl.Recordf(ctx, interfaces.LogLevelWarn, format, v...)
+	logger.loggerImpl.Recordf(ctx, logger.depth, interfaces.LogLevelWarn, format, v...)
 }
 
 func (logger *Logger) Error(ctx context.Context, v ...interface{}) {
-	logger.loggerImpl.Record(ctx, interfaces.LogLevelError, v...)
+	logger.loggerImpl.Record(ctx, logger.depth, interfaces.LogLevelError, v...)
 }
 
 func (logger *Logger) Errorf(ctx context.Context, format string, v ...interface{}) {
-	logger.loggerImpl.Recordf(ctx, interfaces.LogLevelError, format, v...)
+	logger.loggerImpl.Recordf(ctx, logger.depth, interfaces.LogLevelError, format, v...)
 }
 
 func (logger *Logger) Fatal(ctx context.Context, v ...interface{}) {
-	logger.loggerImpl.Record(ctx, interfaces.LogLevelFatal, v...)
+	logger.loggerImpl.Record(ctx, logger.depth, interfaces.LogLevelFatal, v...)
 }
 
 func (logger *Logger) Fatalf(ctx context.Context, format string, v ...interface{}) {
-	logger.loggerImpl.Recordf(ctx, interfaces.LogLevelFatal, format, v...)
+	logger.loggerImpl.Recordf(ctx, logger.depth, interfaces.LogLevelFatal, format, v...)
 }
 
 func SetGlobalLogger(logger *Logger) *Logger {
@@ -88,7 +99,7 @@ func _logOrPanic(f func(logger *Logger)) {
 	if logger == nil {
 		log.Fatal("no global logger")
 	}
-	f(logger)
+	f(logger.WithDepth(3))
 }
 
 func Debug(ctx context.Context, v ...interface{}) {

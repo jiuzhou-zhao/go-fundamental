@@ -22,14 +22,16 @@ type DBToolset struct {
 }
 
 func NewDBToolset(ctx context.Context, cfg *DBConfig, logger interfaces.Logger) (*DBToolset, error) {
+	eLog := loge.NewLogger(logger)
+
 	if cfg == nil {
-		logger.Record(ctx, interfaces.LogLevelFatal, "no config")
+		eLog.Fatal(ctx, "no config")
 		return nil, errors.New("no config")
 	}
 	toolset := &DBToolset{
 		ctx:      ctx,
 		cfg:      cfg,
-		logger:   loge.NewLogger(logger),
+		logger:   eLog,
 		redisMap: make(map[string]*redis.Client),
 		mySQLMap: make(map[string]*xorm.Engine),
 	}

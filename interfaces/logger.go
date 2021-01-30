@@ -31,6 +31,6 @@ func (ll LoggerLevel) String() string {
 }
 
 type Logger interface {
-	Record(ctx context.Context, level LoggerLevel, v ...interface{})
-	Recordf(ctx context.Context, level LoggerLevel, format string, v ...interface{})
+	Record(ctx context.Context, depth int, level LoggerLevel, v ...interface{})
+	Recordf(ctx context.Context, depth int, level LoggerLevel, format string, v ...interface{})
 }
