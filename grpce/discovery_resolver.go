@@ -143,19 +143,24 @@ func (builder *discoveryBuilder) resolveClosed(r *discoveryResolver) {
 
 func RegisterResolver(getter discovery.Getter, logger interfaces.Logger, schema string) error {
 	var builder *discoveryBuilder
+	var err error
 
 	_lock.Lock()
 
-	if b, ok := _builders[schema]; ok {
-		builder = b
-	} else {
-		b, err := newDiscoveryBuilder(getter, logger, schema)
-		if err != nil {
-			return nil
+	if _, ok := _builders[schema]; !ok {
+		builder, err = newDiscoveryBuilder(getter, logger, schema)
+		if err == nil {
+			_builders[schema] = builder
 		}
-		builder = b
 	}
 	_lock.Unlock()
+
+	if err != nil {
+		return err
+	}
+	if builder == nil {
+		return fmt.Errorf("schema %v has registered", schema)
+	}
 
 	resolver.Register(builder)
 	return nil
