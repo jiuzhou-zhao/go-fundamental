@@ -131,7 +131,7 @@ func (s *Server) startDiscovery(ctx context.Context, server *grpc.Server) error 
 		{
 			Host:        host,
 			Port:        port,
-			ServiceName: discovery.BuildServerName(discovery.TypeGRpc, s.serverName, ""),
+			ServiceName: discovery.BuildDiscoveryServerName(discovery.TypeGRpc, s.serverName, ""),
 			Meta:        meta,
 		},
 	})

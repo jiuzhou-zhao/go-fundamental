@@ -1,9 +1,21 @@
 package discovery
 
+import "strings"
+
 const (
 	TypeGRpc = "grpc"
 	TypeHttp = "http"
 )
+
+func IsValidType(t string) bool {
+	switch strings.ToLower(t) {
+	case TypeGRpc:
+	case TypeHttp:
+	default:
+		return false
+	}
+	return true
+}
 
 const (
 	MetaGRPCClass = "grpc_class"

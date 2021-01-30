@@ -14,26 +14,24 @@ type ServiceWrapper struct {
 	wg        sync.WaitGroup
 	ctx       context.Context
 	ctxCancel context.CancelFunc
-	logger    interfaces.Logger
+	logger    *loge.Logger
 
 	validFlag bool
 }
 
 func NewServiceWrapper(ctx context.Context, logger interfaces.Logger) *ServiceWrapper {
 	ctx, cancel := context.WithCancel(ctx)
-	if logger == nil {
-		logger = &loge.ConsoleLogger{}
-	}
 	return &ServiceWrapper{
 		ctx:       ctx,
 		ctxCancel: cancel,
-		logger:    logger,
+		logger:    loge.NewLogger(logger),
 		validFlag: true,
 	}
 }
 
 func (sw *ServiceWrapper) Start(serviceImpl ssinterface.ServiceStub) error {
 	if !sw.validFlag {
+		sw.logger.Fatalf(sw.ctx, "should not start")
 		return errors.New("service wrapper stop or closed")
 	}
 	if serviceImpl == nil {
@@ -42,7 +40,7 @@ func (sw *ServiceWrapper) Start(serviceImpl ssinterface.ServiceStub) error {
 	sw.wg.Add(1)
 	go func() {
 		defer sw.wg.Done()
-		serviceImpl.Run(sw.ctx, sw.logger)
+		serviceImpl.Run(sw.ctx, sw.logger.GetLogger())
 	}()
 	return nil
 }

@@ -5,7 +5,7 @@ import (
 	"strings"
 )
 
-func BuildServerName(t string, name string, index string) string {
+func BuildDiscoveryServerName(t string, name string, index string) string {
 	t = strings.ToLower(t)
 	serverName := fmt.Sprintf("%v:%v", t, name)
 	if index != "" {
@@ -14,17 +14,27 @@ func BuildServerName(t string, name string, index string) string {
 	return serverName
 }
 
-func ParseServerName(n string) (t string, name string, index string, err error) {
+func ParseDiscoveryServerName(n string) (t string, name string, index string, err error) {
 	vs := strings.Split(n, ":")
-	if len(vs) < 2 || len(vs) > 3 {
+	if len(vs) < 2 {
 		err = fmt.Errorf("invalid server name: %v", n)
 		return
 	}
 	t = vs[0]
 	t = strings.ToLower(t)
-	name = vs[1]
-	if len(vs) == 3 {
+	if !IsValidType(t) {
+		err = fmt.Errorf("unknown type: %v", t)
+		return
+	}
+	switch len(vs) {
+	case 2:
+		name = vs[1]
+	case 3:
+		name = vs[1]
 		index = vs[2]
+	default:
+		name = strings.Join(vs[1:len(vs)-1], ":")
+		index = vs[len(vs)-1]
 	}
 	return
 }

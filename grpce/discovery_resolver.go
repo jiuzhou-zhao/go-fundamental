@@ -89,7 +89,7 @@ func (builder *discoveryBuilder) Scheme() string {
 func (builder *discoveryBuilder) onServiceDiscovery(services []*discovery.ServiceInfo) {
 	serviceInfos := make(map[string][]resolver.Address)
 	for _, service := range services {
-		_, n, _, err := discovery.ParseServerName(service.ServiceName)
+		_, n, _, err := discovery.ParseDiscoveryServerName(service.ServiceName)
 		if err != nil {
 			builder.logger.Errorf(context.Background(), "parse server name %v failed: %v", service.ServiceName, err)
 			continue
