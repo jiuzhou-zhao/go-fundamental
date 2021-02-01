@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/jiuzhou-zhao/go-fundamental/grpce/meta"
+	"github.com/jiuzhou-zhao/go-fundamental/grpce/utils"
 	"google.golang.org/grpc"
 )
 
@@ -14,12 +15,9 @@ func ServerIDInterceptor(transKeys []string) grpc.UnaryServerInterceptor {
 	}
 }
 
-func StreamServerIDInterceptor(transKeys []string) grpc.StreamServerInterceptor {
+func ServerStreamIDInterceptor(transKeys []string) grpc.StreamServerInterceptor {
 	return func(srv interface{}, ss grpc.ServerStream, info *grpc.StreamServerInfo, handler grpc.StreamHandler) error {
-		wrapper := &streamWrapper{
-			ServerStream:   ss,
-			WrapperContext: meta.TransferContextMeta(ss.Context(), transKeys),
-		}
+		wrapper := utils.NewServerStreamWrapper(meta.TransferContextMeta(ss.Context(), transKeys), ss)
 		return handler(srv, wrapper)
 	}
 }
@@ -31,7 +29,7 @@ func ClientIDInterceptor(transKeys []string) grpc.UnaryClientInterceptor {
 	}
 }
 
-func StreamClientIDInterceptor(transKeys []string) grpc.StreamClientInterceptor {
+func ClientStreamIDInterceptor(transKeys []string) grpc.StreamClientInterceptor {
 	return func(ctx context.Context, desc *grpc.StreamDesc, cc *grpc.ClientConn, method string,
 		streamer grpc.Streamer, opts ...grpc.CallOption) (stream grpc.ClientStream, err error) {
 		return streamer(meta.TransferContextMeta(ctx, transKeys), desc, cc, method, opts...)

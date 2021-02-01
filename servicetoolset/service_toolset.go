@@ -3,6 +3,7 @@ package servicetoolset
 import (
 	"context"
 	"errors"
+	"fmt"
 	"strings"
 
 	"github.com/grpc-ecosystem/go-grpc-middleware"
@@ -11,6 +12,8 @@ import (
 	"github.com/jiuzhou-zhao/go-fundamental/httpe"
 	"github.com/jiuzhou-zhao/go-fundamental/interfaces"
 	"github.com/jiuzhou-zhao/go-fundamental/loge"
+	"github.com/jiuzhou-zhao/go-fundamental/tracing"
+	"github.com/opentracing/opentracing-go"
 	"google.golang.org/grpc"
 )
 
@@ -66,7 +69,7 @@ func (st *ServerToolset) CreateGRpcServer(cfg *GRpcServerConfig, opts []grpc.Ser
 		interceptors.ServerIDInterceptor(cfg.MetaTransKeys),
 	}
 	streamInterceptors := []grpc.StreamServerInterceptor{
-		interceptors.StreamServerIDInterceptor(cfg.MetaTransKeys),
+		interceptors.ServerStreamIDInterceptor(cfg.MetaTransKeys),
 	}
 	if !cfg.DisableLog {
 		logger := cfg.Logger
@@ -84,6 +87,24 @@ func (st *ServerToolset) CreateGRpcServer(cfg *GRpcServerConfig, opts []grpc.Ser
 			unaryInterceptors = append(unaryInterceptors, interceptors.ServerVerifyInterceptor(cfg.CertInfo))
 			streamInterceptors = append(streamInterceptors, interceptors.ServerStreamVerifyInterceptor(cfg.CertInfo))
 		}
+	}
+
+	if cfg.EnableTracing {
+		tracingObj := opentracing.GlobalTracer()
+
+		if cfg.TracingConfig.ServerAddr != "" {
+			var err error
+			tracingObj, _, err = tracing.NewTracer(cfg.TracingConfig.ServiceName, cfg.TracingConfig.FlushInterval, cfg.TracingConfig.ServerAddr)
+			if err != nil {
+				return fmt.Errorf("new tracker failed: %v", err)
+			}
+		}
+
+		if tracingObj == nil {
+			return errors.New("no valid tracing config")
+		}
+		unaryInterceptors = append(unaryInterceptors, tracing.ServerOpenTracingInterceptor(tracingObj))
+		streamInterceptors = append(streamInterceptors, tracing.ServerStreamOpenTracingInterceptor(tracingObj))
 	}
 
 	opts = append(opts, grpc.UnaryInterceptor(grpc_middleware.ChainUnaryServer(unaryInterceptors...)))

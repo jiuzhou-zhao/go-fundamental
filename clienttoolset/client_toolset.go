@@ -9,6 +9,8 @@ import (
 	"github.com/jiuzhou-zhao/go-fundamental/grpce"
 	"github.com/jiuzhou-zhao/go-fundamental/grpce/interceptors"
 	"github.com/jiuzhou-zhao/go-fundamental/loge"
+	"github.com/jiuzhou-zhao/go-fundamental/tracing"
+	"github.com/opentracing/opentracing-go"
 	"google.golang.org/grpc"
 )
 
@@ -28,13 +30,36 @@ func DialGRpcServer(cfg *GRpcClientConfig, opts []grpc.DialOption) (*grpc.Client
 		interceptors.ClientIDInterceptor(cfg.MetaTransKeys),
 	}
 	streamInterceptors := []grpc.StreamClientInterceptor{
-		interceptors.StreamClientIDInterceptor(cfg.MetaTransKeys),
+		interceptors.ClientStreamIDInterceptor(cfg.MetaTransKeys),
 	}
 
 	if !cfg.DisableLog {
 		if cfg.Logger != nil {
 			unaryInterceptors = append(unaryInterceptors, interceptors.ClientLogInterceptor(cfg.Logger))
-			streamInterceptors = append(streamInterceptors, interceptors.StreamClientLogInterceptor(cfg.Logger))
+			streamInterceptors = append(streamInterceptors, interceptors.ClientStreamLogInterceptor(cfg.Logger))
+		}
+	}
+
+	if !cfg.DisableLog {
+		if cfg.Logger != nil {
+			unaryInterceptors = append(unaryInterceptors, interceptors.ClientLogInterceptor(cfg.Logger))
+			streamInterceptors = append(streamInterceptors, interceptors.ClientStreamLogInterceptor(cfg.Logger))
+		}
+	}
+	if cfg.EnableTracing {
+		tracingObj := opentracing.GlobalTracer()
+
+		if cfg.TracingConfig.ServerAddr != "" {
+			var err error
+			tracingObj, _, err = tracing.NewTracer(cfg.TracingConfig.ServiceName, cfg.TracingConfig.FlushInterval, cfg.TracingConfig.ServerAddr)
+			if err != nil {
+				return nil, fmt.Errorf("new tracker failed: %v", err)
+			}
+		}
+
+		if tracingObj != nil {
+			unaryInterceptors = append(unaryInterceptors, tracing.ClientOpenTracingInterceptor(tracingObj))
+			streamInterceptors = append(streamInterceptors, tracing.ClientStreamOpenTracingInterceptor(tracingObj))
 		}
 	}
 
@@ -44,10 +69,13 @@ func DialGRpcServer(cfg *GRpcClientConfig, opts []grpc.DialOption) (*grpc.Client
 	return grpce.DialGRpcServer(cfg.Address, &cfg.SecureOption, opts...)
 }
 
-func DialGRpcServerByName(schema, serverName string, opts []grpc.DialOption) (*grpc.ClientConn, error) {
-	return DialGRpcServer(&GRpcClientConfig{
-		Address: fmt.Sprintf("%s:///%s", schema, serverName),
-	}, []grpc.DialOption{grpc.WithDefaultServiceConfig(rrGRpcServerConfig)})
+func DialGRpcServerByName(schema, serverName string, cfg *GRpcClientConfig, opts []grpc.DialOption) (*grpc.ClientConn, error) {
+	opts = append(opts, grpc.WithDefaultServiceConfig(rrGRpcServerConfig))
+	if cfg == nil {
+		cfg = &GRpcClientConfig{}
+	}
+	cfg.Address = fmt.Sprintf("%s:///%s", schema, serverName)
+	return DialGRpcServer(cfg, opts)
 }
 
 func RegisterSchemas(ctx context.Context, cfg *RegisterSchemasConfig) error {

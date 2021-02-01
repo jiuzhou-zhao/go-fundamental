@@ -1,11 +1,12 @@
 package servicetoolset
 
 import (
-	"github.com/jiuzhou-zhao/go-fundamental/discovery"
 	"net/http"
 
 	"github.com/jiuzhou-zhao/go-fundamental/certutils"
+	"github.com/jiuzhou-zhao/go-fundamental/discovery"
 	"github.com/jiuzhou-zhao/go-fundamental/interfaces"
+	"github.com/jiuzhou-zhao/go-fundamental/tracing"
 )
 
 type GRpcServerConfig struct {
@@ -17,6 +18,9 @@ type GRpcServerConfig struct {
 	CertInfo          *certutils.SecureOption
 	MetaTransKeys     []string
 	DiscoveryExConfig DiscoveryExConfig
+
+	EnableTracing bool
+	TracingConfig tracing.Config
 }
 
 type HttpServerConfig struct {

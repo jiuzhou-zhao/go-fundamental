@@ -66,8 +66,9 @@ func ClientLogInterceptor(log interfaces.Logger) grpc.UnaryClientInterceptor {
 	}
 }
 
-func StreamClientLogInterceptor(log interfaces.Logger) grpc.StreamClientInterceptor {
-	return func(ctx context.Context, desc *grpc.StreamDesc, cc *grpc.ClientConn, method string, streamer grpc.Streamer, opts ...grpc.CallOption) (stream grpc.ClientStream, err error) {
+func ClientStreamLogInterceptor(log interfaces.Logger) grpc.StreamClientInterceptor {
+	return func(ctx context.Context, desc *grpc.StreamDesc, cc *grpc.ClientConn, method string, streamer grpc.Streamer,
+		opts ...grpc.CallOption) (stream grpc.ClientStream, err error) {
 		id := meta.IdFromOutgoingContext(ctx)
 
 		eLog := loge.NewLogger(log)
