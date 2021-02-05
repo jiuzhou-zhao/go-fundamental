@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
 	"sync"
 	"time"
 
@@ -17,7 +18,8 @@ var (
 	_lock     sync.Mutex
 	_builders = make(map[string]*discoveryBuilder) // schema => builder
 
-	_validSchemaServers sync.Map
+	_validSchemaServers       sync.Map
+	_validGRpcClassToDialName sync.Map
 )
 
 func key4CheckServerDiscovery(schema, serverName string) string {
@@ -27,6 +29,15 @@ func key4CheckServerDiscovery(schema, serverName string) string {
 func HasDiscovery(schema, serverName string) bool {
 	_, ok := _validSchemaServers.Load(key4CheckServerDiscovery(schema, serverName))
 	return ok
+}
+
+func GetDialAddressByGRpcClassName(clsName string) string {
+	if v, ok := _validGRpcClassToDialName.Load(clsName); ok {
+		if s, ok := v.(string); ok {
+			return s
+		}
+	}
+	return ""
 }
 
 //
@@ -109,6 +120,14 @@ func (builder *discoveryBuilder) onServiceDiscovery(services []*discovery.Servic
 			Addr: fmt.Sprintf("%v:%v", service.Host, service.Port),
 		})
 		_validSchemaServers.Store(key4CheckServerDiscovery(builder.schema, n), time.Now())
+		for k, v := range service.Meta {
+			if k != discovery.MetaGRPCClass {
+				continue
+			}
+			for _, cls := range strings.Split(v, ";") {
+				_validGRpcClassToDialName.Store(cls, fmt.Sprintf("%s:///%s", builder.schema, n))
+			}
+		}
 	}
 
 	builder.serviceInfosLock.Lock()
