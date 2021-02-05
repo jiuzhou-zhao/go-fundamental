@@ -16,7 +16,18 @@ import (
 var (
 	_lock     sync.Mutex
 	_builders = make(map[string]*discoveryBuilder) // schema => builder
+
+	_validSchemaServers sync.Map
 )
+
+func key4CheckServerDiscovery(schema, serverName string) string {
+	return schema + ":" + serverName
+}
+
+func HasDiscovery(schema, serverName string) bool {
+	_, ok := _validSchemaServers.Load(key4CheckServerDiscovery(schema, serverName))
+	return ok
+}
 
 //
 // discoveryBuilder
@@ -97,6 +108,7 @@ func (builder *discoveryBuilder) onServiceDiscovery(services []*discovery.Servic
 		serviceInfos[n] = append(serviceInfos[n], resolver.Address{
 			Addr: fmt.Sprintf("%v:%v", service.Host, service.Port),
 		})
+		_validSchemaServers.Store(key4CheckServerDiscovery(builder.schema, n), time.Now())
 	}
 
 	builder.serviceInfosLock.Lock()
@@ -141,6 +153,7 @@ func (builder *discoveryBuilder) resolveClosed(r *discoveryResolver) {
 	}
 }
 
+// getter和schema一一对应，不应该多个schema公用一个getter，除非getter支持多次Start操作
 func RegisterResolver(getter discovery.Getter, logger interfaces.Logger, schema string) error {
 	var builder *discoveryBuilder
 	var err error
