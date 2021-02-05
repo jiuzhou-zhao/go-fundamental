@@ -19,23 +19,21 @@ import (
 
 type ServerToolset struct {
 	ctx          context.Context
+	logger       *loge.Logger
 	serverHelper *ServerHelper
 	gRpcServer   *grpce.Server
 	httpServer   *httpe.Server
-	logger       interfaces.Logger
 
 	started bool
 }
 
 func NewServerToolset(ctx context.Context, logger interfaces.Logger) *ServerToolset {
-	if logger == nil {
-		logger = &loge.EmptyLogger{}
+	sst := &ServerToolset{
+		ctx:    ctx,
+		logger: loge.NewLogger(logger),
 	}
-	return &ServerToolset{
-		ctx:          ctx,
-		serverHelper: NewServerHelper(ctx, logger),
-		logger:       logger,
-	}
+	sst.serverHelper = NewServerHelper(ctx, sst.logger.GetLogger())
+	return sst
 }
 
 func (st *ServerToolset) Start() error {
@@ -74,7 +72,7 @@ func (st *ServerToolset) CreateGRpcServer(cfg *GRpcServerConfig, opts []grpc.Ser
 	if !cfg.DisableLog {
 		logger := cfg.Logger
 		if logger == nil {
-			logger = st.logger
+			logger = st.logger.GetLogger()
 		}
 		if logger != nil {
 			unaryInterceptors = append(unaryInterceptors, interceptors.ServerLogInterceptor(logger))
@@ -110,9 +108,15 @@ func (st *ServerToolset) CreateGRpcServer(cfg *GRpcServerConfig, opts []grpc.Ser
 	opts = append(opts, grpc.UnaryInterceptor(grpc_middleware.ChainUnaryServer(unaryInterceptors...)))
 	opts = append(opts, grpc.StreamInterceptor(grpc_middleware.ChainStreamServer(streamInterceptors...)))
 
-	st.gRpcServer = grpce.NewServer(cfg.Name, cfg.Address, st.logger, beforeServerStart, opts)
+	st.gRpcServer = grpce.NewServer(cfg.Name, cfg.Address, st.logger.GetLogger(), beforeServerStart, opts)
 	if cfg.DiscoveryExConfig.Setter != nil {
 		st.gRpcServer.EnableDiscovery(cfg.DiscoveryExConfig.Setter, cfg.DiscoveryExConfig.ExternalAddress, cfg.DiscoveryExConfig.Meta)
+	}
+	if cfg.EnableGRpcWeb {
+		if cfg.GRpcWebAddress == "" {
+			st.logger.Fatal(st.ctx, "gRpcWeb server enabled, but no address config")
+		}
+		st.gRpcServer.EnableGRpcWeb(cfg.GRpcWebAddress, cfg.GRpcWebUseWebsocket, cfg.GRpcWebPingInterval)
 	}
 	return nil
 }
@@ -124,7 +128,7 @@ func (st *ServerToolset) CreateHttpServer(cfg *HttpServerConfig) error {
 	if cfg == nil || cfg.Address == "" || !strings.Contains(cfg.Address, ":") || cfg.Handler == nil {
 		return errors.New("invalid input args")
 	}
-	st.httpServer = httpe.NewServer(cfg.Address, st.logger, cfg.Handler)
+	st.httpServer = httpe.NewServer(cfg.Address, st.logger.GetLogger(), cfg.Handler)
 
 	return nil
 }

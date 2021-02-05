@@ -5,9 +5,12 @@ import (
 	"errors"
 	"fmt"
 	"net"
+	"net/http"
 	"strconv"
 	"strings"
+	"time"
 
+	"github.com/improbable-eng/grpc-web/go/grpcweb"
 	"github.com/jiuzhou-zhao/go-fundamental/discovery"
 	"github.com/jiuzhou-zhao/go-fundamental/interfaces"
 	"github.com/jiuzhou-zhao/go-fundamental/iputils"
@@ -28,6 +31,11 @@ type Server struct {
 	setter          discovery.Setter
 	externalAddress string
 	meta            map[string]string
+
+	enableGRpcWeb       bool
+	gRpcWebAddress      string
+	gRpcWebUseWebsocket bool
+	gRpcWebPingInterval time.Duration
 }
 
 func NewServer(serverName string, address string, logger interfaces.Logger, beforeServerStart BeforeServerStart, opts []grpc.ServerOption) *Server {
@@ -49,7 +57,18 @@ func (s *Server) EnableDiscovery(setter discovery.Setter, externalAddress string
 	s.meta = meta
 }
 
-func (s *Server) getDiscoveryHostAndPort(ctx context.Context) (host string, port int, err error) {
+func (s *Server) EnableGRpcWeb(address string, useWebsocket bool, pingInterval time.Duration) {
+	s.gRpcWebAddress = address
+	if s.gRpcWebAddress == "" {
+		s.enableGRpcWeb = false
+	} else {
+		s.enableGRpcWeb = true
+	}
+	s.gRpcWebUseWebsocket = useWebsocket
+	s.gRpcWebPingInterval = pingInterval
+}
+
+func (s *Server) getDiscoveryHostAndPort(ctx context.Context, address string) (host string, port int, err error) {
 	fnParse := func(address string) (host string, port int, err error) {
 		if address == "" {
 			err = errors.New("empty address")
@@ -82,7 +101,7 @@ func (s *Server) getDiscoveryHostAndPort(ctx context.Context) (host string, port
 	if host != "" && port > 0 {
 		return
 	}
-	host2, port2, err := fnParse(s.address)
+	host2, port2, err := fnParse(address)
 	if err != nil {
 		return
 	}
@@ -109,7 +128,7 @@ func (s *Server) startDiscovery(ctx context.Context, server *grpc.Server) error 
 	if s.setter == nil {
 		return nil
 	}
-	host, port, err := s.getDiscoveryHostAndPort(ctx)
+	host, port, err := s.getDiscoveryHostAndPort(ctx, s.address)
 	if err != nil {
 		return err
 	}
@@ -127,14 +146,29 @@ func (s *Server) startDiscovery(ctx context.Context, server *grpc.Server) error 
 	for k, v := range s.meta {
 		meta[k] = v
 	}
-	return s.setter.Start([]*discovery.ServiceInfo{
+
+	serviceInfos := []*discovery.ServiceInfo{
 		{
 			Host:        host,
 			Port:        port,
 			ServiceName: discovery.BuildDiscoveryServerName(discovery.TypeGRpc, s.serverName, ""),
 			Meta:        meta,
 		},
-	})
+	}
+	if s.enableGRpcWeb {
+		host, port, err := s.getDiscoveryHostAndPort(ctx, s.gRpcWebAddress)
+		if err != nil {
+			s.logger.Errorf(ctx, "discovery gRpcWeb on address %v failed: %v", s.gRpcWebAddress, err)
+		} else {
+			serviceInfos = append(serviceInfos, &discovery.ServiceInfo{
+				Host:        host,
+				Port:        port,
+				ServiceName: discovery.BuildDiscoveryServerName(discovery.TypeHttp, s.serverName, ""),
+				Meta:        meta,
+			})
+		}
+	}
+	return s.setter.Start(serviceInfos)
 }
 
 func (s *Server) stopAndWaitDiscovery() {
@@ -157,21 +191,45 @@ func (s *Server) Run(ctx context.Context) (err error) {
 
 	l, err := net.Listen("tcp", s.address)
 	if err != nil {
+		s.logger.Errorf(ctx, "server Listen on %v failed: %v", s.address, err)
 		return
 	}
-	s.logger.Infof(ctx, "grpc server listening on %v", s.address)
+	s.logger.Infof(ctx, "server listening on %v", s.address)
+
+	var gRrpcWeb *gRpcWebServer
+	if s.enableGRpcWeb {
+		gRrpcWeb = &gRpcWebServer{
+			ctx:                 ctx,
+			logger:              s.logger,
+			gRpcServer:          server,
+			address:             s.gRpcWebAddress,
+			gRpcWebUseWebsocket: s.gRpcWebUseWebsocket,
+			gRpcWebPingInterval: s.gRpcWebPingInterval,
+		}
+	}
+
+	err = s.startDiscovery(ctx, server)
+	if err != nil {
+		s.logger.Errorf(ctx, "discovery setter start failed: %v", err)
+	}
 
 	go func() {
-		err = s.startDiscovery(ctx, server)
-		if err != nil {
-			s.logger.Errorf(ctx, "discovery setter start failed: %v", err)
-		}
 		err = server.Serve(l)
 		if err != nil {
-			s.logger.Errorf(ctx, "grpc server serve error: %v", err)
+			s.logger.Errorf(ctx, "server serve error: %v", err)
 		}
 		cancel()
 	}()
+
+	if gRrpcWeb != nil {
+		go func() {
+			err = gRrpcWeb.Run()
+			if err != nil {
+				s.logger.Errorf(ctx, "gRpcWebServer error: %v", err)
+			}
+			cancel()
+		}()
+	}
 
 	<-ctx.Done()
 
@@ -181,4 +239,50 @@ func (s *Server) Run(ctx context.Context) (err error) {
 	s.stopAndWaitDiscovery()
 
 	return nil
+}
+
+type gRpcWebServer struct {
+	ctx        context.Context
+	logger     *loge.Logger
+	gRpcServer *grpc.Server
+
+	address             string
+	gRpcWebUseWebsocket bool
+	gRpcWebPingInterval time.Duration
+}
+
+func (s *gRpcWebServer) Run() error {
+	l, err := net.Listen("tcp", s.address)
+	if err != nil {
+		s.logger.Errorf(s.ctx, "gRpcWebServer Listen on %v failed: %v", s.address, err)
+		return err
+	}
+	s.logger.Infof(s.ctx, "gRpcWebServer listening on %v", s.address)
+
+	httpServer := &http.Server{Handler: s}
+	err = httpServer.Serve(l)
+	if err != nil {
+		s.logger.Errorf(s.ctx, "gRpcWebServer serve error: %v", err)
+	}
+	return err
+}
+
+func (s *gRpcWebServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	options := []grpcweb.Option{
+		grpcweb.WithCorsForRegisteredEndpointsOnly(false),
+		grpcweb.WithOriginFunc(func(origin string) bool { return true }),
+	}
+	if s.gRpcWebUseWebsocket {
+		options = append(
+			options,
+			grpcweb.WithWebsockets(true),
+			grpcweb.WithWebsocketOriginFunc(func(req *http.Request) bool { return true }),
+		)
+
+		if s.gRpcWebPingInterval > 0 {
+			options = append(options, grpcweb.WithWebsocketPingInterval(s.gRpcWebPingInterval))
+		}
+	}
+	wrappedGrpc := grpcweb.WrapServer(s.gRpcServer, options...)
+	wrappedGrpc.ServeHTTP(w, r)
 }

@@ -2,6 +2,7 @@ package servicetoolset
 
 import (
 	"net/http"
+	"time"
 
 	"github.com/jiuzhou-zhao/go-fundamental/certutils"
 	"github.com/jiuzhou-zhao/go-fundamental/discovery"
@@ -21,6 +22,11 @@ type GRpcServerConfig struct {
 
 	EnableTracing bool
 	TracingConfig tracing.Config
+
+	EnableGRpcWeb       bool
+	GRpcWebAddress      string
+	GRpcWebUseWebsocket bool
+	GRpcWebPingInterval time.Duration
 }
 
 type HttpServerConfig struct {
