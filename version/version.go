@@ -1,11 +1,9 @@
 package version
 
 import (
+	"encoding/base64"
 	"fmt"
 	"sync"
-
-	"encoding/base64"
-	"github.com/golang/glog"
 )
 
 var (
@@ -15,8 +13,10 @@ var (
 	Mods      = "Not Provided"
 )
 
-var modesOnce sync.Once
-var modsInfo = ""
+var (
+	modesOnce sync.Once
+	modsInfo  = ""
+)
 
 // GetVersionInfo function
 func GetVersionInfo() string {
@@ -29,7 +29,7 @@ func GetMods() string {
 		if Mods != "" {
 			modsInfoData, err := base64.StdEncoding.DecodeString(Mods)
 			if err != nil {
-				glog.Errorf("decode failed: %v, %v", err, Mods)
+				fmt.Printf("decode failed: %v, %v", err, Mods)
 				return
 			}
 			modsInfo = string(modsInfoData)
@@ -40,5 +40,5 @@ func GetMods() string {
 
 // Print function
 func Print() {
-	glog.Info(GetVersionInfo())
+	fmt.Print(GetVersionInfo())
 }

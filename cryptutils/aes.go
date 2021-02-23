@@ -6,7 +6,7 @@ import (
 	"crypto/rand"
 	"encoding/base64"
 	"errors"
-	"github.com/golang/glog"
+	"fmt"
 	"io"
 )
 
@@ -16,7 +16,7 @@ const (
 
 func aesKey(key []byte) []byte {
 	if len(key) > 32 {
-		glog.Warningf("key too long")
+		fmt.Println("key too long")
 	}
 	fixedKey := make([]byte, 32)
 	if len(key) > 32 {
@@ -45,7 +45,7 @@ func AESGCMEncrypt(text, key []byte) ([]byte, error) {
 	}
 
 	nonce := make([]byte, nonceLen)
-	if _, err := io.ReadFull(rand.Reader, nonce); err != nil {
+	if _, err = io.ReadFull(rand.Reader, nonce); err != nil {
 		return nil, err
 	}
 

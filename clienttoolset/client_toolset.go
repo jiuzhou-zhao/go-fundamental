@@ -5,7 +5,7 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/grpc-ecosystem/go-grpc-middleware"
+	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
 	"github.com/jiuzhou-zhao/go-fundamental/grpce"
 	"github.com/jiuzhou-zhao/go-fundamental/grpce/interceptors"
 	"github.com/jiuzhou-zhao/go-fundamental/loge"

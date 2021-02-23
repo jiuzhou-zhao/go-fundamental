@@ -11,11 +11,9 @@ type EmptyLogger struct {
 }
 
 func (logger *EmptyLogger) Record(ctx context.Context, depth int, level interfaces.LoggerLevel, v ...interface{}) {
-
 }
 
 func (logger *EmptyLogger) Recordf(ctx context.Context, depth int, level interfaces.LoggerLevel, format string, v ...interface{}) {
-
 }
 
 type ConsoleLogger struct {

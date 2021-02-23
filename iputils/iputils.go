@@ -10,9 +10,13 @@ import (
 	"google.golang.org/grpc/peer"
 )
 
+const (
+	localIPV4 = "127.0.0.1"
+)
+
 func regularIP(ip string) string {
 	if ip == "::1" {
-		return "127.0.0.1"
+		return localIPV4
 	}
 	return ip
 }
@@ -29,7 +33,7 @@ func GrpcGetRealIP(ctx context.Context) string {
 		if ok && client.Addr != net.Addr(nil) {
 			addSlice := strings.Split(client.Addr.String(), ":")
 			if addSlice[0] == "[" {
-				return "127.0.0.1"
+				return localIPV4
 			}
 			clientIP = addSlice[0]
 		}
@@ -48,7 +52,7 @@ func HttpGetRealIP(r *http.Request) string {
 		clientIP = r.RemoteAddr
 		addSlice := strings.Split(clientIP, ":")
 		if addSlice[0] == "[" {
-			return "127.0.0.1"
+			return localIPV4
 		}
 		clientIP = addSlice[0]
 	}

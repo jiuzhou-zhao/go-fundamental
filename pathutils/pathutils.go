@@ -115,7 +115,6 @@ func LCopy(src, dest string, info os.FileInfo) error {
 // with scanning contents inside the directory
 // and pass everything to "copy" recursively.
 func DCopy(srcdir, destdir string, info os.FileInfo) error {
-
 	originalMode := info.Mode()
 
 	// Make dest dir with 0755 so that everything writable.
@@ -147,7 +146,6 @@ func DCopy(srcdir, destdir string, info os.FileInfo) error {
 // with considering existence of parent directory
 // and file permission.
 func FCopy(src, dest string, info os.FileInfo) error {
-
 	if err := os.MkdirAll(filepath.Dir(dest), os.ModePerm); err != nil {
 		return err
 	}

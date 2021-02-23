@@ -26,7 +26,8 @@ func SetHttpCookie(ctx context.Context, key, val string, maxAge int) error {
 		Value:    val,
 		Path:     "/",
 		HttpOnly: true,
-		MaxAge:   maxAge}
+		MaxAge:   maxAge,
+	}
 	return grpc.SendHeader(ctx, metadata.Pairs("Set-Cookie", cookie.String()))
 }
 
@@ -42,7 +43,8 @@ func UnsetHttpCookie(ctx context.Context, key string) error {
 		Value:    "",
 		Path:     "/",
 		HttpOnly: true,
-		Expires:  time.Now().AddDate(-1, 0, 0)}
+		Expires:  time.Now().AddDate(-1, 0, 0),
+	}
 	return grpc.SendHeader(ctx, metadata.Pairs("Set-Cookie", cookie.String()))
 }
 

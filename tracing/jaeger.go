@@ -25,13 +25,10 @@ const (
 	maxReqResponseMsgLength = 4096
 )
 
-var (
-	// Morally a const:
-	gRPCComponentTag = opentracing.Tag{
-		Key:   string(ext.Component),
-		Value: "gRPC",
-	}
-)
+var gRPCComponentTag = opentracing.Tag{
+	Key:   string(ext.Component),
+	Value: "gRPC",
+}
 
 func NewTracer(serviceName string, flushInterval time.Duration, address string) (tracer opentracing.Tracer, closer io.Closer, err error) {
 	cfg := config.Configuration{
@@ -323,7 +320,8 @@ func InjectSpanContext(ctx context.Context, tracer opentracing.Tracer, clientSpa
 	return metadata.NewOutgoingContext(ctx, md)
 }
 
-func newOpenTracingClientStream(tracer opentracing.Tracer, cs grpc.ClientStream, method string, desc *grpc.StreamDesc, clientSpan opentracing.Span, otgrpcOpts *options) grpc.ClientStream {
+func newOpenTracingClientStream(tracer opentracing.Tracer, cs grpc.ClientStream,
+	method string, desc *grpc.StreamDesc, clientSpan opentracing.Span, otgrpcOpts *options) grpc.ClientStream {
 	finishChan := make(chan struct{})
 
 	isFinished := new(int32)

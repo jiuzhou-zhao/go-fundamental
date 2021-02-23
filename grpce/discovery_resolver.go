@@ -82,7 +82,6 @@ func newDiscoveryBuilder(getter discovery.Getter, logger interfaces.Logger, sche
 
 func (builder *discoveryBuilder) Build(target resolver.Target, cc resolver.ClientConn,
 	_ resolver.BuildOptions) (resolver.Resolver, error) {
-
 	cc.UpdateState(resolver.State{
 		Addresses:     builder.resolve(target.Endpoint),
 		ServiceConfig: nil,
