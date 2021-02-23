@@ -41,7 +41,10 @@ func (qm *QueueM) Update(k, v interface{}) bool {
 }
 
 func (qm *QueueM) PushBack(k, v interface{}) {
-	qm.tryRemoveByKey(k)
+	if e, ok := qm.m[k]; ok {
+		qm.l.MoveToBack(e)
+		return
+	}
 	qm.m[k] = qm.l.PushBack(&qi{
 		k: k,
 		v: v,
@@ -49,7 +52,10 @@ func (qm *QueueM) PushBack(k, v interface{}) {
 }
 
 func (qm *QueueM) PushFront(k, v interface{}) {
-	qm.tryRemoveByKey(k)
+	if e, ok := qm.m[k]; ok {
+		qm.l.MoveToFront(e)
+		return
+	}
 	qm.m[k] = qm.l.PushFront(&qi{
 		k: k,
 		v: v,
