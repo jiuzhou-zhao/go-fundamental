@@ -9,8 +9,9 @@ import (
 )
 
 var (
-	globalLock   sync.RWMutex
-	globalLogger *Logger
+	globalLock     sync.RWMutex
+	globalLogger   *Logger
+	defaultContext = context.Background()
 )
 
 type Logger struct {
@@ -79,6 +80,13 @@ func (logger *Logger) Fatalf(ctx context.Context, format string, v ...interface{
 	logger.loggerImpl.Recordf(ctx, logger.depth, interfaces.LogLevelFatal, format, v...)
 }
 
+func SetDefaultContext(ctx context.Context) {
+	defaultContext = ctx
+	if defaultContext == nil {
+		defaultContext = context.Background()
+	}
+}
+
 func SetGlobalLogger(logger *Logger) *Logger {
 	globalLock.Lock()
 	defer globalLock.Unlock()
@@ -102,61 +110,78 @@ func _logOrPanic(f func(logger *Logger)) {
 	f(logger.WithDepth(3))
 }
 
+func _goodContext(ctx context.Context) context.Context {
+	if ctx != nil {
+		return ctx
+	}
+	return defaultContext
+}
+
 func Debug(ctx context.Context, v ...interface{}) {
+	ctx = _goodContext(ctx)
 	_logOrPanic(func(logger *Logger) {
 		logger.Debug(ctx, v...)
 	})
 }
 
 func Debugf(ctx context.Context, format string, v ...interface{}) {
+	ctx = _goodContext(ctx)
 	_logOrPanic(func(logger *Logger) {
 		logger.Debugf(ctx, format, v...)
 	})
 }
 
 func Info(ctx context.Context, v ...interface{}) {
+	ctx = _goodContext(ctx)
 	_logOrPanic(func(logger *Logger) {
 		logger.Info(ctx, v...)
 	})
 }
 
 func Infof(ctx context.Context, format string, v ...interface{}) {
+	ctx = _goodContext(ctx)
 	_logOrPanic(func(logger *Logger) {
 		logger.Infof(ctx, format, v...)
 	})
 }
 
 func Warn(ctx context.Context, v ...interface{}) {
+	ctx = _goodContext(ctx)
 	_logOrPanic(func(logger *Logger) {
 		logger.Warn(ctx, v...)
 	})
 }
 
 func Warnf(ctx context.Context, format string, v ...interface{}) {
+	ctx = _goodContext(ctx)
 	_logOrPanic(func(logger *Logger) {
 		logger.Warnf(ctx, format, v...)
 	})
 }
 
 func Error(ctx context.Context, v ...interface{}) {
+	ctx = _goodContext(ctx)
 	_logOrPanic(func(logger *Logger) {
 		logger.Error(ctx, v...)
 	})
 }
 
 func Errorf(ctx context.Context, format string, v ...interface{}) {
+	ctx = _goodContext(ctx)
 	_logOrPanic(func(logger *Logger) {
 		logger.Errorf(ctx, format, v...)
 	})
 }
 
 func Fatal(ctx context.Context, v ...interface{}) {
+	ctx = _goodContext(ctx)
 	_logOrPanic(func(logger *Logger) {
 		logger.Fatal(ctx, v...)
 	})
 }
 
 func Fatalf(ctx context.Context, format string, v ...interface{}) {
+	ctx = _goodContext(ctx)
 	_logOrPanic(func(logger *Logger) {
 		logger.Fatalf(ctx, format, v...)
 	})
