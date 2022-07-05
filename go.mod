@@ -26,3 +26,5 @@ require (
 	google.golang.org/protobuf v1.25.0
 	gopkg.in/yaml.v2 v2.4.0
 )
+
+replace github.com/go-xorm/xorm => gitea.com/xorm/xorm v0.7.9

@@ -30,9 +30,6 @@ type ServiceInfo struct {
 
 type Observer func(services []*ServiceInfo)
 
-//
-//
-//
 type Setter interface {
 	Start([]*ServiceInfo) error
 	Stop()
